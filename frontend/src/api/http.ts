@@ -8,7 +8,7 @@ const baseURL = API_BASE_URL || "http://127.0.0.1:8000/api";
 console.log("API_BASE_URL (frontend):", baseURL);
 
 export const http = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: baseURL,
   timeout: 60000,   // avval 15000 edi, 60 sekund qilamiz
 });
 

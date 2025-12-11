@@ -1,0 +1,80 @@
+/* frontend/src/pages/dashboard/FacultyEducationTable.css */
+
+.hm-table-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hm-table-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.hm-table-container {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.hm-faculty-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 900px;
+    /* Ensure scrolling on small screens */
+}
+
+.hm-faculty-table th,
+.hm-faculty-table td {
+    border: 1px solid #e5e7eb;
+    padding: 10px 12px;
+}
+
+.hm-faculty-table th {
+    background-color: #0f3b64;
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.hm-faculty-table td {
+    color: #1f2937;
+    text-align: center;
+}
+
+.hm-faculty-table td.text-left {
+    text-align: left;
+}
+
+.hm-faculty-table tr:hover td {
+    background-color: #f9fafb;
+}
+
+.hm-table-footer {
+    background-color: #f3f4f6;
+    font-weight: 800;
+}
+
+.hm-table-footer td {
+    background-color: #f3f4f6;
+}
+
+/* Spinner for loading state inside card */
+.hm-table-loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+}

@@ -5,27 +5,36 @@ const Sidebar: React.FC = () => {
     return (
         <aside style={{
             width: '240px',
-            borderRight: '1px solid #ddd',
+            borderRight: '1px solid #e5e7eb',
             height: 'calc(100vh - 60px)',
-            backgroundColor: '#f9f9f9',
-            padding: '20px'
+            backgroundColor: '#fff',
+            padding: '20px 10px',
+            display: 'flex',
+            flexDirection: 'column'
         }}>
             <nav>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     <li>
                         <NavLink
                             to="/"
                             style={({ isActive }) => ({
                                 display: 'block',
-                                padding: '10px',
-                                color: isActive ? 'blue' : 'black',
-                                fontWeight: isActive ? 'bold' : 'normal',
-                                textDecoration: 'none'
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                color: isActive ? '#3b82f6' : '#6b7280',
+                                fontWeight: isActive ? '600' : '500',
+                                textDecoration: 'none',
+                                backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                                transition: 'all 0.2s'
                             })}
                         >
-                            Dashboard
+                            Bosh sahifa
                         </NavLink>
                     </li>
+                    {/* 
+                    <li><NavLink to="/dashboard" ...>Dashboard</NavLink></li>
+                    <li><NavLink to="/reports" ...>Hisobotlar</NavLink></li> 
+                    */}
                 </ul>
             </nav>
         </aside>

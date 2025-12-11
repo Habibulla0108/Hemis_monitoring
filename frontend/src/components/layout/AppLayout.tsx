@@ -9,7 +9,7 @@ const AppLayout: React.FC = () => {
             <TopBar />
             <div style={{ display: 'flex', flex: 1 }}>
                 <Sidebar />
-                <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+                <main style={{ flex: 1, padding: '0', overflowY: 'auto' }}>
                     <Outlet />
                 </main>
             </div>

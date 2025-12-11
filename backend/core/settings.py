@@ -65,6 +65,7 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:
 HEMIS_BASE_URL = config("HEMIS_BASE_URL", default="https://student.urdu.uz/rest")
 HEMIS_TOKEN = config("HEMIS_TOKEN")
 HEMIS_UNIVERSITY_CODE = "urdu"     # UrDU kodi
+HEMIS_API_STUDENT_CONTINGENT_ENDPOINT = config("HEMIS_API_STUDENT_CONTINGENT_ENDPOINT", default="v1/data/student-list")
 
 ROOT_URLCONF = 'core.urls'
 

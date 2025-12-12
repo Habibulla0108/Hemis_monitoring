@@ -2,14 +2,7 @@ from django.urls import path
 from .views import StudentContingentSummaryView, FacultyTableDataView
 
 urlpatterns = [
-    path(
-        "monitoring/student-contingent/",
-        StudentContingentSummaryView.as_view(),
-        name="student-contingent-summary",
-    ),
-    path(
-        "monitoring/faculty-table/",
-        FacultyTableDataView.as_view(),
-        name="faculty-table-data",
-    ),
+    path("student-contingent/", StudentContingentSummaryView.as_view()),
+    # path("student-contingent-matrix/", StudentContingentMatrixView.as_view()), # Removed as unused/refactored
+    path("faculty-table-data/", FacultyTableDataView.as_view()), # New endpoint
 ]

@@ -37,7 +37,7 @@ def diagnose():
     form_sum = 0
     print("\n--- Education Forms ---")
     for code, name in forms_map.items():
-        count = client.get_student_count(_education_form=code, _student_status=11)
+        count = client.get_student_count(education_form_id=code, student_status_id=11)
         print(f"{name} ({code}): {count}")
         form_sum += count
     
@@ -51,7 +51,7 @@ def diagnose():
     
     fac_sum = 0
     for f in faculties:
-        count = client.get_student_count(_department=f['id'], _student_status=11)
+        count = client.get_student_count(department_id=f['id'], student_status_id=11)
         print(f"{f['name']}: {count}")
         fac_sum += count
         

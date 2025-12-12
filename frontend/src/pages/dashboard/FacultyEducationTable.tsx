@@ -29,6 +29,8 @@ const FacultyEducationTable: React.FC = () => {
         fetchData();
     }, []);
 
+    const formatNumber = (num: number) => num.toLocaleString("uz-UZ");
+
     if (loading) {
         return (
             <div className="hm-table-card">
@@ -59,39 +61,34 @@ const FacultyEducationTable: React.FC = () => {
                         <tr>
                             <th style={{ width: "40px" }}>№</th>
                             <th style={{ textAlign: "left" }}>FAKULTET</th>
-                            <th>KUNDUZGI</th>
-                            <th>SIRTQI</th>
-                            <th>IKKINCHI OLIY (SIRTQI)</th>
-                            <th>IKKINCHI OLIY (KUNDUZGI)</th>
-                            <th>MASOFAVIY</th>
-                            <th>KECHKI</th>
+                            {data.columns.map((col) => (
+                                <th key={col.id}>{col.name.toUpperCase()}</th>
+                            ))}
                             <th>JAMI</th>
                         </tr>
                     </thead>
                     <tbody>
                         {data.rows.map((row, index) => (
-                            <tr key={row.id}>
+                            <tr key={row.faculty_id}>
                                 <td>{index + 1}</td>
-                                <td className="text-left" style={{ fontWeight: 600 }}>{row.name}</td>
-                                <td>{row.kunduzgi}</td>
-                                <td>{row.sirtqi}</td>
-                                <td>{row.ikkinchi_oliy_sirtqi}</td>
-                                <td>{row.ikkinchi_oliy_kunduzgi}</td>
-                                <td>{row.masofaviy}</td>
-                                <td>{row.kechki}</td>
-                                <td style={{ fontWeight: 800 }}>{row.jami}</td>
+                                <td className="text-left" style={{ fontWeight: 600 }}>{row.faculty_name}</td>
+                                {data.columns.map((col) => (
+                                    <td key={col.id}>
+                                        {row.values[col.id] ? formatNumber(row.values[col.id]) : 0}
+                                    </td>
+                                ))}
+                                <td style={{ fontWeight: 800 }}>{formatNumber(row.total)}</td>
                             </tr>
                         ))}
                         {/* Total Row */}
                         <tr className="hm-table-footer">
                             <td colSpan={2} style={{ textAlign: "right", paddingRight: "20px" }}>JAMI</td>
-                            <td>{data.total.kunduzgi}</td>
-                            <td>{data.total.sirtqi}</td>
-                            <td>{data.total.ikkinchi_oliy_sirtqi}</td>
-                            <td>{data.total.ikkinchi_oliy_kunduzgi}</td>
-                            <td>{data.total.masofaviy}</td>
-                            <td>{data.total.kechki}</td>
-                            <td>{data.total.jami}</td>
+                            {data.columns.map((col) => (
+                                <td key={col.id}>
+                                    {data.totals.by_form[col.id] ? formatNumber(data.totals.by_form[col.id]) : 0}
+                                </td>
+                            ))}
+                            <td>{formatNumber(data.totals.grand_total)}</td>
                         </tr>
                     </tbody>
                 </table>

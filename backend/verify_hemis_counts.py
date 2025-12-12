@@ -35,7 +35,7 @@ def verify_counts():
     for code, name in ed_forms_map.items():
         try:
             # Check for active students (_student_status=11 is standard for 'active')
-            count = client.get_student_count(_education_form=code, _student_status=11)
+            count = client.get_student_count(education_form_id=code, student_status_id=11)
             print(f"{code:<5} | {name:<30} | {count:<10}")
         except Exception as e:
             print(f"{code:<5} | {name:<30} | ERROR: {e}")

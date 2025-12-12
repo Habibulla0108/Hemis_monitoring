@@ -27,26 +27,24 @@ interface MonitoringData {
 }
 
 // --- Colors & Helpers ---
-const getEduFormColor = (name: string | undefined | null): string => {
-  if (!name) return "#3b82f6"; // Fallback
+// --- Colors & Helpers ---
+const COLORS = [
+  "#4361EE", // Bright Blue
+  "#F72585", // Pink
+  "#3A0CA3", // Deep Purple
+  "#4CC9F0", // Cyan
+  "#06D6A0", // Green
+  "#FFD166", // Yellow-Orange
+  "#EF476F", // Red-Pink
+  "#7209B7", // Purple
+  "#118AB2", // Teal
+  "#073B4C", // Dark Blue
+  "#FF9F1C", // Orange
+  "#2EC4B6", // Turquoise
+];
 
-  const normalized = name.toLowerCase().trim();
-
-  // Specific mapping
-  if (normalized.includes("ikkinchi oliy (sirtqi)")) return "#f97316";
-  if (normalized.includes("ikkinchi oliy (kunduzgi)")) return "#3b82f6";
-  if (normalized.includes("qo'shma (sirtqi)")) return "#6366f1";
-
-  // General keys
-  if (normalized.includes("kunduzgi")) return "#6c757d";
-  if (normalized.includes("sirtqi")) return "#4c71ff";
-  if (normalized.includes("masofaviy")) return "#34a853";
-  if (normalized.includes("kechki")) return "#9e9e9e";
-
-  // Second degree generic catch if not caught above
-  if (normalized.includes("ikkinchi")) return "#f97316";
-
-  return "#3b82f6";
+const getEduFormColor = (name: string, index: number): string => {
+  return COLORS[index % COLORS.length];
 };
 
 const formatNumber = (num: number) => num.toLocaleString("uz-UZ");
@@ -206,11 +204,11 @@ const OverviewDashboard: React.FC = () => {
 
           {/* Custom Legend Above Chart */}
           <div className="hm-custom-legend">
-            {data.education_form_counts.map((item) => (
+            {data.education_form_counts.map((item, index) => (
               <div key={item.name} className="hm-legend-item">
                 <span
                   className="hm-legend-dot"
-                  style={{ backgroundColor: getEduFormColor(item.name) }}
+                  style={{ backgroundColor: getEduFormColor(item.name, index) }}
                 ></span>
                 <span>{item.name}</span>
               </div>
@@ -232,7 +230,7 @@ const OverviewDashboard: React.FC = () => {
                   stroke="none"
                 >
                   {data.education_form_counts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getEduFormColor(entry.name)} />
+                    <Cell key={`cell-${index}`} fill={getEduFormColor(entry.name, index)} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />

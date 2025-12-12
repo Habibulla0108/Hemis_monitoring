@@ -1,57 +1,54 @@
-// src/api/monitoring.ts
+// frontend/src/api/monitoring.ts
 import { http } from "./http";
 
-export interface FacultyCount {
-  name: string;
-  count: number;
-}
-
-export interface EducationFormCount {
-  name: string;
-  count: number;
-}
-
-export interface StudentContingentSummary {
-  total_students: number;
-  faculty_counts: FacultyCount[];
-  education_form_counts: EducationFormCount[];
-}
-
-export async function getStudentContingentSummary(): Promise<StudentContingentSummary> {
-  const res = await http.get<StudentContingentSummary>(
-    "/monitoring/student-contingent/"
-  );
-  return res.data;
-}
-
-export interface FacultyTableRow {
+export interface EducationFormDto {
   id: number;
+  code?: string;
   name: string;
-  kunduzgi: number;
-  sirtqi: number;
-  ikkinchi_oliy_sirtqi: number;
-  ikkinchi_oliy_kunduzgi: number;
-  masofaviy: number;
-  kechki: number;
-  jami: number;
+}
+
+export interface StudentMatrixRow {
+  faculty_id: number;
+  faculty_name: string;
+  by_form: Record<string, number>;
+  total: number;
+}
+
+export interface StudentMatrixResponse {
+  faculties: { id: number; name: string }[];
+  education_forms: EducationFormDto[];
+  rows: StudentMatrixRow[];
+  totals: {
+    by_form: Record<string, number>;
+    grand_total: number;
+  };
+}
+
+export async function getStudentContingentMatrix(): Promise<StudentMatrixResponse> {
+  const resp = await http.get("/monitoring/student-contingent-matrix/");
+  return resp.data as StudentMatrixResponse;
 }
 
 export interface FacultyTableResponse {
-  rows: FacultyTableRow[];
-  total: {
-    kunduzgi: number;
-    sirtqi: number;
-    ikkinchi_oliy_sirtqi: number;
-    ikkinchi_oliy_kunduzgi: number;
-    masofaviy: number;
-    kechki: number;
-    jami: number;
+  columns: { id: number; name: string }[];
+  rows: {
+    faculty_id: number;
+    faculty_name: string;
+    values: Record<string, number>;
+    total: number;
+  }[];
+  totals: {
+    by_form: Record<string, number>;
+    grand_total: number;
   };
 }
 
 export async function getFacultyTableData(): Promise<FacultyTableResponse> {
-  const res = await http.get<FacultyTableResponse>(
-    "/monitoring/faculty-table/"
-  );
-  return res.data;
+  const resp = await http.get("/monitoring/faculty-table-data/");
+  return resp.data as FacultyTableResponse;
+}
+
+export async function getStudentContingentSummary(): Promise<any> {
+  const resp = await http.get("/monitoring/student-contingent/");
+  return resp.data;
 }

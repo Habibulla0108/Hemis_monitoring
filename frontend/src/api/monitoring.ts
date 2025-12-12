@@ -30,7 +30,7 @@ export async function getStudentContingentMatrix(): Promise<StudentMatrixRespons
 }
 
 export interface FacultyTableResponse {
-  columns: { id: number; name: string }[];
+  columns: { id: number | string; name: string }[];
   rows: {
     faculty_id: number;
     faculty_name: string;

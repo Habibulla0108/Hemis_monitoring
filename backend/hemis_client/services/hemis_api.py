@@ -154,3 +154,4 @@ class HemisClient:
         except (TypeError, ValueError):
             logger.warning("Unexpected totalCount value from HEMIS: %r", total)
             return 0
+

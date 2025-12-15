@@ -9,7 +9,7 @@ console.log("API_BASE_URL (frontend):", baseURL);
 
 export const http = axios.create({
   baseURL: baseURL,
-  timeout: 60000,   // avval 15000 edi, 60 sekund qilamiz
+  timeout: 600000,   // avval 15000 edi, 60 sekund qilamiz
 });
 
 

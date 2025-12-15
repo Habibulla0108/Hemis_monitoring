@@ -1,6 +1,7 @@
 // frontend/src/api/monitoring.ts
 import { http } from "./http";
 
+/** ---------------- EXISTING TYPES (o'zingizniki qoladi) ---------------- **/
 export interface EducationFormDto {
   id: number;
   code?: string;
@@ -51,4 +52,57 @@ export async function getFacultyTableData(): Promise<FacultyTableResponse> {
 export async function getStudentContingentSummary(): Promise<any> {
   const resp = await http.get("/monitoring/student-contingent/");
   return resp.data;
+}
+
+/** ---------------- NEW: ATTENDANCE ---------------- **/
+
+export type SelectOption = { id: number | string; name: string };
+
+export interface AttendanceOptionsResponse {
+  faculties: SelectOption[];
+  education_forms: SelectOption[];
+  curricula: SelectOption[];
+  groups: SelectOption[];
+  semesters: SelectOption[];
+}
+
+export interface AttendanceRow {
+  entity: string;
+  date: string;
+  timestamp: string;
+  university: string;
+  department: string;
+  group: string;
+  students: number;
+  lessons: number;
+  absent_on: number;
+  absent_off: number;
+  on_percent: number;
+  off_percent: number;
+  total_percent: number;
+}
+
+export interface AttendanceStatResponse {
+  rows: AttendanceRow[];
+  count: number;
+}
+
+export async function getAttendanceOptions(params?: {
+  faculty_id?: number;
+  education_form_id?: number;
+  curriculum_id?: number;
+}): Promise<AttendanceOptionsResponse> {
+  const resp = await http.get("/monitoring/attendance/options/", { params });
+  return resp.data as AttendanceOptionsResponse;
+}
+
+export async function getAttendanceStat(params: {
+  group_id: number;
+  semester?: number;
+  group_by?: "group" | "department" | "university";
+  page?: number;
+  limit?: number;
+}): Promise<AttendanceStatResponse> {
+  const resp = await http.get("/monitoring/attendance/stat/", { params });
+  return resp.data as AttendanceStatResponse;
 }

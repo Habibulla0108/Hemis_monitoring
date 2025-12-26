@@ -49,7 +49,7 @@ const Sidebar: React.FC = () => {
                 transition: "all 0.2s",
               })}
             >
-              Davomat
+              Kafedra O‘qituvchilar ro‘yxati
             </NavLink>
           </li>
         </ul>

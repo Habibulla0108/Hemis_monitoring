@@ -31,19 +31,22 @@ def attendance_options_view(request):
 @permission_classes([AllowAny])
 def attendance_stat_view(request):
     try:
-        group_id = request.query_params.get("group_id")
-        if not group_id:
-            return Response({"error": "group_id is required"}, status=400)
+        faculty_id = request.query_params.get("faculty_id")
+        if not faculty_id:
+            return Response({"error": "faculty_id is required"}, status=400)
 
-        semester = request.query_params.get("semester")
-        group_by = request.query_params.get("group_by") or "group"
+        education_type_id = request.query_params.get("education_type_id")
+        education_form_id = request.query_params.get("education_form_id")
+        semester_id = request.query_params.get("semester_id")
+
         page = int(request.query_params.get("page") or 1)
         limit = int(request.query_params.get("limit") or 200)
 
         data = get_attendance_stat(
-            group_id=int(group_id),
-            semester=int(semester) if semester else None,
-            group_by=group_by,
+            faculty_id=int(faculty_id),
+            education_type_id=int(education_type_id) if education_type_id else None,
+            education_form_id=int(education_form_id) if education_form_id else None,
+            semester_id=int(semester_id) if semester_id else None,
             page=page,
             limit=limit,
         )

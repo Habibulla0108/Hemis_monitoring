@@ -44,143 +44,230 @@ def get_attendance_filter_options(
 ) -> dict:
     """
     Frontend filter option’lari:
-    faculties, education_forms, curricula, groups, semesters
+    faculties, education_types, education_forms, education_years, semester_types
     """
     client = HemisClient()
 
-    # 1) Faculties
-    dept_payload = client.get_department_list(limit=1000)
+    # 1) Faculties (Active Only)
+    dept_payload = client.get_department_list(limit=500)
     dept_items = _safe_items(dept_payload)
     faculties: list[dict] = []
+    
     for it in dept_items:
         st = (it.get("structureType") or {}).get("code")
-        if str(st) == "11":
+        # Active check: Hemis usually returns active but explicit check is good
+        is_active = it.get("active", True)
+        if str(st) == "11" and is_active is not False:
             faculties.append(_opt(it.get("id"), it.get("name", "Noma'lum")))
     faculties.sort(key=lambda x: x["name"])
 
-    # 2) Education forms (siz bergan ro'yxatga mos filtr)
-    forms_raw = client.get_education_forms()
-    order = [11, 13, 15, 14, 12, 16, 20, 21, 19, 18, 17, 22, 23]
-    allowed_ids = set(order)
-
+    # 2) Education Types & Forms
+    education_types: list[dict] = []
     education_forms: list[dict] = []
-    for f in forms_raw:
-        try:
-            fid = int(f.get("id"))
-        except Exception:
-            continue
-        if fid in allowed_ids:
-            education_forms.append(_opt(fid, f.get("name", "Noma'lum")))
-    education_forms.sort(key=lambda x: order.index(x["id"]) if x["id"] in allowed_ids else 999)
+    
+    if faculty_id:
+        # Fetch active curricula for this faculty to extract types/forms
+        c_params = {
+            "limit": 500, 
+            "_department": faculty_id
+        }
+        curr_payload = client.get_curriculum_list(params=c_params)
+        curr_items = _safe_items(curr_payload)
 
-    # 3) Curricula
-    curricula: list[dict] = []
-    try:
-        cur_params: dict[str, Any] = {"limit": 200}
-        if faculty_id is not None:
-            cur_params["_department"] = faculty_id
-        if education_form_id is not None:
-            cur_params["_education_form"] = education_form_id
+        seen_types = set()
+        seen_forms = set()
 
-        cur_payload = client.get_curriculum_list(params=cur_params)
-        for it in _safe_items(cur_payload):
-            cid = it.get("id")
-            name = it.get("name") or it.get("code") or f"Curriculum {cid}"
-            curricula.append(_opt(cid, str(name)))
-        curricula.sort(key=lambda x: x["name"])
-    except Exception as e:
-        logger.warning("curriculum-list fetch failed: %s", e)
+        for c in curr_items:
+            # Education Type
+            spec = c.get("specialty") or {}
+            etype = spec.get("educationType") or {}
+            et_id = etype.get("id")
+            et_name = etype.get("name")
+            if et_id and et_name and et_id not in seen_types:
+                seen_types.add(et_id)
+                education_types.append(_opt(et_id, et_name))
 
-    # 4) Groups
-    groups: list[dict] = []
-    try:
-        g_params: dict[str, Any] = {"limit": 200}
-        if curriculum_id is not None:
-            g_params["_curriculum"] = curriculum_id
-        if faculty_id is not None:
-            g_params["_department"] = faculty_id
-        if education_form_id is not None:
-            g_params["_education_form"] = education_form_id
+            # Education Form
+            eform = c.get("educationForm") or {}
+            ef_id = eform.get("id") or eform.get("code")
+            ef_name = eform.get("name")
+            if ef_id and ef_name:
+                try: 
+                    ef_id_int = int(ef_id)
+                    if ef_id_int not in seen_forms:
+                        seen_forms.add(ef_id_int)
+                        education_forms.append(_opt(ef_id_int, ef_name))
+                except: pass
+        
+        education_types.sort(key=lambda x: x["name"])
+        # Custom sort for forms
+        order = [11, 13, 15, 14, 12, 16]
+        education_forms.sort(key=lambda x: order.index(x["id"]) if x["id"] in order else 99)
 
-        g_payload = client.get_group_list(params=g_params)
-        for it in _safe_items(g_payload):
-            gid = it.get("id")
-            name = it.get("name") or it.get("code") or f"Group {gid}"
-            groups.append(_opt(gid, str(name)))
-        groups.sort(key=lambda x: x["name"])
-    except Exception as e:
-        logger.warning("group-list fetch failed: %s", e)
-
-    # 5) Semesters (fallback: 1..12)
-    semesters: list[dict] = []
-    try:
-        sem_payload = client.get_semester_list(params={"limit": 50})
-        for it in _safe_items(sem_payload):
-            sid = it.get("id") or it.get("code")
-            name = it.get("name") or str(sid)
-            semesters.append(_opt(int(sid), str(name)))
-        semesters.sort(key=lambda x: x["id"])
-    except Exception:
-        semesters = [{"id": i, "name": str(i)} for i in range(1, 13)]
+    # 3) Semesters (Fixed 1-8)
+    semesters = [{"id": i, "name": f"{i}-semestr"} for i in range(1, 9)]
 
     return {
         "faculties": faculties,
+        "education_types": education_types,
         "education_forms": education_forms,
-        "curricula": curricula,
-        "groups": groups,
         "semesters": semesters,
     }
 
 
 def get_attendance_stat(
     *,
-    group_id: int,
-    semester: int | None = None,
-    group_by: str = "group",
+    faculty_id: int,
+    education_type_id: int | None = None,
+    education_form_id: int | None = None,
+    semester_id: int | None = None,
     page: int = 1,
-    limit: int = 200,
+    limit: int = 50,
 ) -> dict:
     """
-    HEMIS: GET /v1/data/attendance-stat
+    Faculty-Level Report:
+    1. Find groups matching Faculty + EduType + EduForm.
+    2. Parallel fetch attendance for these groups (and optional semester).
+    3. Aggregate & Filter.
     """
     client = HemisClient()
-
-    params: dict[str, Any] = {
-        "page": page,
-        "limit": limit,
-        "group_by": group_by,   # group / department / university
-        "_group": group_id,     # HEMIS shuni talab qiladi
+    
+    # 1. Find Curricula first (to get relevant groups)
+    c_params = {
+        "limit": 500, 
+        "_department": faculty_id
     }
-    if semester is not None:
-        params["_semester"] = semester
+    
+    curricula_payload = client.get_curriculum_list(params=c_params)
+    all_curricula = _safe_items(curricula_payload)
+    
+    # Filter Curricula by Type & Form
+    valid_c_ids = set()
+    c_map = {} # id -> {code, specialtyName, formName}
+    
+    for c in all_curricula:
+        # Check Form
+        sform = c.get("educationForm") or {}
+        sform_id = sform.get("id") or sform.get("code")
+        if education_form_id:
+            try:
+                if int(sform_id or 0) != education_form_id:
+                    continue
+            except: continue
+        
+        cid = c.get("id")
+        valid_c_ids.add(cid)
+        c_map[cid] = {
+            "specialty": (c.get("specialty") or {}).get("name", ""),
+            "form": sform.get("name", "")
+        }
 
-    payload = client.get_attendance_stat(params=params)
-    items = _safe_items(payload)
+    if not valid_c_ids:
+        return {"rows": [], "count": 0}
 
-    rows: list[dict] = []
-    for it in items:
-        rows.append({
-            "entity": _stringify(it.get("_entityname") or it.get("entity") or it.get("_entityName")),
-            "date": _stringify(it.get("date") or it.get("DATE")),
-            "timestamp": _stringify(it.get("timestamp") or it.get("TIMESTAMP")),
-            "university": _stringify(it.get("university") or it.get("UNIVERSITY")),
-            "department": _stringify(it.get("department") or it.get("DEPARTMENT")),
-            "group": _stringify(it.get("group") or it.get("GROUP")),
+    # 3. Fetch Groups
+    g_params = {
+        "limit": 1000,
+        "_department": faculty_id,
+        "active": True
+    }
+    g_payload = client.get_group_list(params=g_params)
+    all_groups = _safe_items(g_payload)
+    
+    target_groups = []
+    for g in all_groups:
+        gcid = g.get("_curriculum")
+        if gcid in valid_c_ids:
+            target_groups.append(g)
 
-            # HEMIS raw fields:
-            "students": int(it.get("students") or it.get("STUDENTS") or 0),
-            "lessons": int(it.get("lessons") or it.get("LESSONS") or 0),
+    if not target_groups:
+        return {"rows": [], "count": 0}
 
-            # ⚠️ bu maydonlarni hozircha "ON/OFF" deb chiqaryapmiz (Kelgan/Kelmagan deb noto‘g‘ri bo‘lib qolmasin)
-            "absent_on": int(it.get("absent_on") or it.get("ABSENT_ON") or 0),
-            "absent_off": int(it.get("absent_off") or it.get("ABSENT_OFF") or 0),
+    # 3. Parallel Fetch Attendance
+    import concurrent.futures
+    flattened_rows = []
+    
+    def fetch_group_stat(grp):
+        gid = grp['id']
+        gname = grp['name']
+        cid = grp.get("_curriculum")
+        meta = c_map.get(cid, {})
+        
+        p = {
+            "limit": 200, 
+            "group_by": "student",
+            "_group": gid,
+            "_student_status": 11
+        }
+        # NOTE: We do not pass _semester=semester_id because Hemis expects a specific ID, not '1', '2'.
+        # Passing '1' causes empty results. We rely on Hemis returning current/active semester data.
 
-            "on_percent": float(it.get("on_percent") or it.get("ON_PERCENT") or 0),
-            "off_percent": float(it.get("off_percent") or it.get("OFF_PERCENT") or 0),
-            "total_percent": float(it.get("total_percent") or it.get("TOTAL_PERCENT") or 0),
-        })
+        try:
+            res = client.get_attendance_stat(params=p)
+            items = _safe_items(res)
+            g_rows = []
+            for it in items:
+                abs_on = int(it.get("absent_on") or it.get("ABSENT_ON") or 0)
+                abs_off = int(it.get("absent_off") or it.get("ABSENT_OFF") or 0)
+                if abs_on == 0 and abs_off == 0:
+                    continue
+                
+                # Extract student name safely - ROBUST F.I.O
+                student_obj = it.get("student") or it.get("_student") or {}
+                student_name = None
+                
+                if isinstance(student_obj, dict):
+                    student_name = student_obj.get("full_name") or student_obj.get("fullname") or student_obj.get("name") or student_obj.get("short_name")
+                    if not student_name:
+                         # Construct from parts
+                         lname = student_obj.get("second_name") or student_obj.get("last_name") or student_obj.get("lastname") or ""
+                         fname = student_obj.get("first_name") or student_obj.get("firstname") or ""
+                         mname = student_obj.get("third_name") or student_obj.get("father_name") or ""
+                         parts = [x for x in [lname, fname, mname] if x]
+                         if parts:
+                              student_name = " ".join(parts)
+
+                # Fallback to current level keys
+                if not student_name:
+                    student_name = it.get("fullname") or it.get("short_name") or it.get("name")
+                
+                # Fallback to entity if everything fails
+                if not student_name:
+                     ent = it.get("_entityname") or it.get("entity") or it.get("_entityName")
+                     student_name = _stringify(ent)
+
+                g_rows.append({
+                    "entity": student_name,
+                    "specialty": meta.get("specialty"),
+                    "education_form": meta.get("form"),
+                    "group": gname,
+                    "semester": str(semester_id) if semester_id else "-",
+                    "subjects": int(it.get("subjects") or 0),
+                    "lessons": int(it.get("lessons") or 0),
+                    "absent_on": abs_on,
+                    "absent_off": abs_off,
+                    "total_absent": abs_on + abs_off,
+                    "total_percent": float(it.get("total_percent") or 0)
+                })
+            return g_rows
+        except:
+            return []
+
+    futures = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        for g in target_groups:
+            futures.append(executor.submit(fetch_group_stat, g))
+                 
+        for f in concurrent.futures.as_completed(futures):
+            flattened_rows.extend(f.result())
+
+    # 4. Pagination
+    total_count = len(flattened_rows)
+    start = (page - 1) * limit
+    end = start + limit
+    paged_rows = flattened_rows[start:end]
 
     return {
-        "rows": rows,
-        "count": len(rows),
+        "rows": paged_rows,
+        "count": total_count,
     }

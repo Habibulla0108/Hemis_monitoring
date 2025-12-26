@@ -43,7 +43,7 @@ const COLORS = [
   "#2EC4B6", // Turquoise
 ];
 
-const getEduFormColor = (name: string, index: number): string => {
+const getEduFormColor = (_name: string, index: number): string => {
   return COLORS[index % COLORS.length];
 };
 

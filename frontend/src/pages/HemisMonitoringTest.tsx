@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   getStudentContingentSummary,
-  StudentContingentSummary,
+  type StudentContingentSummary,
 } from "../api/monitoring";
 
 const HemisMonitoringTest: React.FC = () => {
@@ -51,7 +51,7 @@ const HemisMonitoringTest: React.FC = () => {
 
       <h3>Fakultetlar kesimi:</h3>
       <ul>
-        {data.faculty_counts.map((f) => (
+        {data.faculty_counts.map((f: any) => (
           <li key={f.faculty_name}>
             {f.faculty_name}: <b>{f.count}</b>
           </li>
@@ -60,7 +60,7 @@ const HemisMonitoringTest: React.FC = () => {
 
       <h3>Ta'lim shakllari kesimi:</h3>
       <ul>
-        {data.education_form_counts.map((e) => (
+        {data.education_form_counts.map((e: any) => (
           <li key={e.form_name}>
             {e.form_name}: <b>{e.count}</b>
           </li>
